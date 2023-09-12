@@ -1,0 +1,297 @@
+;; Tanya Khan
+;; takhan
+
+;; Mansi Gera
+;; mgera
+
+; The wait staff in a local restaurant use hand-held devices to record customers' orders. In the following problems, you will write data definitions and functions that model
+; the ordering of items from the restaurant's menu.
+
+; 1. (20 Points)  Each item on the menu consists of the name of the item, the kind (appetizer, entree, dessert, or beverage),
+; whether or not the item is vegetarian?, the quantity of the items ordered, and the cost of a single item. Provide a data definition for Menu-item that represents the given
+; information. Give at least 3 examples of menu items.
+
+;; String String Boolean Natural Natural -> a-menu-item
+
+
+
+;; a Menu-item is a (make-menu-item String String Boolean Number Natural)
+;; interp:  a Menu-item where 
+;;   name          is the item's name                                                      String
+;;   kind          is the tyoe of cuisine (appetizer, entree, dessert, or beverage)        String
+;;   vegetarian?   is a true/false value that asks if the menu item has meat in it or not  Boolean 
+;;   quantity      is the amount of item ordered                                           Natural 
+;;   cost-per-unit is how much 1 of the menu item costs                                    Number 
+
+
+(define-struct menu-item (name kind vegetarian? quantity cost-per-unit))
+
+(define PANI          (make-menu-item "water"             "beverage"   #true  4   0   ))
+(define LASSI         (make-menu-item "mango lassi"       "beverage"   #true  4   3.50))
+(define SOFT-DRINK-PK (make-menu-item "pakola"            "beverage"   #true  1   1.99))
+(define SOFT-DRINK-IN (make-menu-item "thumbs up"         "beverage"   #true  1   1.50))
+ 
+(define SAMOSA        (make-menu-item "chicken samosa"    "appetizer"  #false 1  10.99))
+(define PANEER        (make-menu-item "paneer 65"         "appetizer"  #true  1   9.5 ))
+(define PAKORA        (make-menu-item "onion pakora"      "appetizer"  #true  4   3   ))
+
+(define BIRYANI       (make-menu-item "goat biryani"       "entree"    #false 1  19.99))
+(define TIKKA         (make-menu-item "chicken tikka"      "entree"    #false 3  10.00))
+(define PALAK-PANEER  (make-menu-item "palak paneer"       "entree"    #true  2  8.25 ))
+(define RAJMA         (make-menu-item "rajma chawal"       "entree"    #true  6  5.25 ))
+
+
+(define LADOO         (make-menu-item "besan ladoo"        "dessert"   #true 10  1.25 ))
+(define HALWA         (make-menu-item "carrot halwa"       "dessert"   #true 3   7.99 ))
+(define BARFI         (make-menu-item "pista barfi"        "dessert"   #true 12  3.25 ))
+
+
+; 2. (5 Points)  Write the template for functions over menu-items.
+
+
+;(define (make-menu-item-fcn a-make-menu-item)
+;   (...(name                         a-make-menu-item)
+;       (kind                         a-make-menu-item)
+;       (vegetarian?                  a-make-menu-item)
+;       (quantity                     a-make-menu-item)
+;       (cost-per-unit                a-make-menu-item)))
+                                     
+
+; 3. (10 Points)  Define an Order (a ListOfMenu-item). Give at least two examples of orders.  Your lists should contain more than a single menu item.
+
+;; an Order is one of
+;;    empty
+;;    (cons menu-item Order)
+
+
+
+(define YUM1 (cons LASSI         (cons SAMOSA                    (cons HALWA     empty  ))))
+(define YUM2                     (cons PANEER (cons TIKKA        (cons BARFI     empty  ))))
+(define YUM3 (cons SOFT-DRINK-PK (cons PAKORA (cons PALAK-PANEER                 empty  ))))
+(define YUM4 (cons SOFT-DRINK-IN              (cons BIRYANI      (cons BARFI     empty  ))))
+(define YUM5 (cons PANI          (cons PAKORA (cons PALAK-PANEER (cons LADOO     empty )))))
+(define YUM6 (cons LASSI         (cons PANEER (cons RAJMA        (cons HALWA     empty )))))
+
+
+
+; 4. (5 Points)  Write the template for functions over an order (a ListOfMenu-item). As you develop the following functions over orders, develop auxiliary (helper) functions over menu items.
+
+;;lomi-fcn: Order -> ...
+;;...
+
+; (define (lomi-fcn alomi)
+;   (cond [(empty? alomi)  (...) ]
+;         [(cons?  alomi)  (...        (menu-fcn  (first alomi))
+;                                      (lomi-fcn  (rest  alomi)))]))
+
+; 5. (30 Points)  Develop the function count-appetizers, that consumes an order and returns the number of items in the order that are appetizers. (Here the quantity of each
+; appetizer in the list is not taken into account by this function - the function simply counts each menu item in the list that is classified as an appetizer.)
+
+
+;; count-appetizers: Order -> Natural
+;; consumes an order (YUM1, 2, 3, etc) and returns the number of items that are appetizers
+
+(check-expect (count-appetizers empty)0)
+(check-expect (count-appetizers YUM1) 1)
+(check-expect (count-appetizers YUM2) 1)
+(check-expect (count-appetizers YUM3) 1)
+(check-expect (count-appetizers YUM5) 1)
+
+
+(define (count-appetizers alomi)
+  (cond [(empty? alomi) 0]
+        [(cons? alomi) (if (is-it-an-app (first alomi))
+                           (+ 1 (count-appetizers (rest alomi)))
+                           (count-appetizers (rest alomi)))]))
+
+;; is-it-an-app: Menu-item -> Boolean
+;; consumes a menu item and checks to see whether the menu kind is an appetizer
+
+(define (is-it-an-app a-menu-item)
+  (string=? (menu-item-kind a-menu-item) "appetizer"))
+
+(check-expect (is-it-an-app SAMOSA) #true)
+(check-expect (is-it-an-app PANEER) #true)
+(check-expect (is-it-an-app LASSI) #false)
+(check-expect (is-it-an-app LADOO) #false)
+              
+
+; 6. (30 Points)  Develop a function list-expensive-vegetarian that consumes an order and a number and produces an order. The order that is produced contains only those items from the
+; original order that are vegetarian and that cost more than an amount given.
+
+
+;: is-it-expensive-vegetarian: Menu-item Number -> Boolean
+;; check to see whether the menu item kind is vegetarian and if the cost per unit is greater than the amount given
+
+(define (is-it-expensive-vegetarian a-menu-item expensive-cost)
+  (and (menu-item-vegetarian? a-menu-item) (> (menu-item-cost-per-unit a-menu-item) expensive-cost)))
+
+(check-expect (is-it-expensive-vegetarian LASSI 2)   #true )
+(check-expect (is-it-expensive-vegetarian TIKKA 2)   #false)
+(check-expect (is-it-expensive-vegetarian PANEER 22) #false)
+
+
+;list-expensive-vegetarian: Order Number -> Order
+;to produce an order that contains only vegetarian items from the original order that cost more than the amount given
+
+(check-expect (list-expensive-vegetarian YUM1 10) empty)
+(check-expect (list-expensive-vegetarian YUM2 2) (cons PANEER (cons BARFI empty)))
+(check-expect (list-expensive-vegetarian YUM6 5) (cons PANEER (cons RAJMA (cons HALWA empty))))
+
+
+
+ (define (list-expensive-vegetarian some-order expensive-cost)
+   (cond [(empty? some-order)  empty]
+         [(cons?  some-order) (if (is-it-expensive-vegetarian (first some-order) expensive-cost)
+                                  (cons (first some-order) (list-expensive-vegetarian
+                                                           (rest some-order) expensive-cost))
+                                  (list-expensive-vegetarian (rest some-order) expensive-cost))])) 
+
+
+
+
+; 7. (30 Points)  Develop a function order-total. The function consumes an order and produces the total cost of the order (a number). When calculating the total cost, you must take into account
+; the quantity of each item ordered.
+
+
+;;total-cost: Menu-item -> Number
+;;consumes a menu item to produce the total cost per menu item
+
+
+
+(define (total-cost a-menu-item)
+  (* (menu-item-quantity a-menu-item) (menu-item-cost-per-unit a-menu-item)))
+
+(check-expect (total-cost LASSI) 14)
+(check-expect (total-cost PANI) 0)
+(check-expect (total-cost HALWA) 23.97)
+(check-expect (total-cost BARFI) 39) 
+
+;;order-total: Order -> Natural
+;consumes order to produce the total cost of the order
+
+ (define (order-total order)
+   (cond [(empty? order)  0 ]
+         [(cons?  order)  (+        (total-cost   (first order))
+                                    (order-total  (rest  order)))]))
+
+ (check-expect (order-total YUM1) 48.96)
+ (check-expect (order-total YUM2) 78.50)
+ (check-expect (order-total YUM3) 30.49)
+ (check-expect (order-total YUM4) 60.49)
+ (check-expect (order-total YUM5) 41) 
+
+; (define PANI          (make-menu-item "water"             "beverage"  #true  4   0   )) ;  0
+; (define LASSI         (make-menu-item "mango lassi"       "beverage"  #true  4   3.50)) ; 14
+; (define SOFT-DRINK-PK (make-menu-item "pakola"            "beverage"  #true  1   1.99)) ; 1.99
+; (define SOFT-DRINK-IN (make-menu-item "thumbs up"         "beverage"  #true  1   1.50)) ; 1.50
+;  
+; (define SAMOSA        (make-menu-item "chicken samosa"    "appetizer" #false 1  10.99)) ; 10.99
+; (define PANEER        (make-menu-item "paneer 65"         "appetizer" #true  1   9.5 )) ; 9.50
+; (define PAKORA        (make-menu-item "onion pakora"      "appetizer" #true  4   3   )) ; 12 
+; 
+; (define BIRYANI       (make-menu-item "goat biryani"       "entree"    #false 1 19.99)) ; 19.99
+; (define TIKKA         (make-menu-item "chicken tikka"      "entree"    #false 3 10.00)) ; 30
+; (define PALAK-PANEER  (make-menu-item "palak paneer"       "entree"    #true  2 8.25 )) ; 16.50
+; 
+; 
+; (define LADOO         (make-menu-item "besan ladoo"        "dessert"   #true 10 1.25 )) ; 12.5
+; (define HALWA         (make-menu-item "carrot halwa"       "dessert"   #true 3  7.99 )) ; 23.97
+; (define BARFI         (make-menu-item "pista barfi"        "dessert"   #true 12 3.25 )) ; 39
+; 
+; (define YUM1 (cons LASSI         (cons SAMOSA                    (cons HALWA     empty  )))) ; 48.96
+; (define YUM2                     (cons PANEER (cons TIKKA        (cons BARFI     empty  )))) ; 78.50
+; (define YUM3 (cons SOFT-DRINK-PK (cons PAKORA (cons PALAK-PANEER                 empty  )))) ; 30.49
+; (define YUM4 (cons SOFT-DRINK-IN              (cons BIRYANI      (cons BARFI     empty  )))) ; 60.49 
+; (define YUM5 (cons PANI          (cons PAKORA (cons PALAK-PANEER (cons LADOO     empty ))))) ; 41
+; 
+
+; 8. (30 Points)  Develop a function beverage-total that consumes an order and produces a number. The function calculates the cost of all beverages in the order (again, take quantities into account).
+
+;is-bev?: Menu-item -> Boolean
+;consumes a menu item and returns whether the kind is a beverage or not
+
+(define (is-bev? a-menu-item)
+  (string=? (menu-item-kind a-menu-item) "beverage"))
+
+(check-expect (is-bev? LASSI) #true)
+(check-expect (is-bev? PANI) #true)
+(check-expect (is-bev? LADOO) #false)
+(check-expect (is-bev? BIRYANI) #false)
+
+
+;beverage-total: Order -> Number
+;to consume an order and produce the cost of all beverages in the order
+
+
+
+(define (beverage-total order)
+  (cond [(empty? order)  0 ]
+        [(cons?  order)  (if (is-bev? (first order))
+                             (+ (total-cost (first order)) (beverage-total (rest order)))
+                             (beverage-total (rest  order)))]))
+
+
+(check-expect (beverage-total YUM5) 0)
+(check-expect (beverage-total YUM1) 14)
+(check-expect (beverage-total YUM3) 1.99)
+(check-expect (beverage-total YUM2) 0)
+
+
+; 9. (30 Points)  Develop a function called cost-with-tip. The function consumes an order and a number representing the percent of the tip. The function produces the total cost of the order
+; with the tip. When calculating the cost, the tip is applied only to non-beverage items.
+
+;;calculate-tip: Menu-item Number -> Number
+;;consume a menu item and a number to produce the total cost with tip
+
+(define (calculate-tip a-menu-item tip)
+  (* (total-cost a-menu-item) (+ 1 (/ tip 100))))
+
+(check-expect (calculate-tip SAMOSA 20) 13.188)
+(check-expect (calculate-tip PANEER 0 ) 9.5)
+(check-expect (calculate-tip LADOO  15) 14.375)
+
+
+;;cost-with-tip: Order Natural -> Natural
+;;consumes an order and the percentage of tip to produce the total cost of the order including the tip
+
+(define (cost-with-tip order a-number)
+  (cond [(empty? order) 0]
+        [(cons? order) (if (is-bev? (first order))
+                           (+ (total-cost (first order)) (cost-with-tip (rest order) a-number))
+                           (+ (calculate-tip (first order) a-number) (cost-with-tip (rest order) a-number)))]))
+
+
+(check-expect (cost-with-tip YUM1 5)50.708)
+(check-expect (cost-with-tip YUM2 20)94.2)
+(check-expect (cost-with-tip YUM3 15)34.765)
+
+; (define YUM1 (cons LASSI         (cons SAMOSA                    (cons HALWA     empty  )))) ; 48.96
+;; 10.99 + 23.97
+
+                                     
+; ; (define PANI          (make-menu-item "water"             "beverage"  #true  4   0   )) ;  0
+; ; (define LASSI         (make-menu-item "mango lassi"       "beverage"  #true  4   3.50)) ; 14
+; ; (define SOFT-DRINK-PK (make-menu-item "pakola"            "beverage"  #true  1   1.99)) ; 1.99
+; ; (define SOFT-DRINK-IN (make-menu-item "thumbs up"         "beverage"  #true  1   1.50)) ; 1.50
+; ;  
+; ; (define SAMOSA        (make-menu-item "chicken samosa"    "appetizer" #false 1  10.99)) ; 10.99
+; ; (define PANEER        (make-menu-item "paneer 65"         "appetizer" #true  1   9.5 )) ; 9.50
+; ; (define PAKORA        (make-menu-item "onion pakora"      "appetizer" #true  4   3   )) ; 12 
+; ; 
+; ; (define BIRYANI       (make-menu-item "goat biryani"       "entree"    #false 1 19.99)) ; 19.99
+; ; (define TIKKA         (make-menu-item "chicken tikka"      "entree"    #false 3 10.00)) ; 30
+; ; (define PALAK-PANEER  (make-menu-item "palak paneer"       "entree"    #true  2 8.25 )) ; 16.50
+; ; 
+; ; 
+; ; (define LADOO         (make-menu-item "besan ladoo"        "dessert"   #true 10 1.25 )) ; 12.5
+; ; (define HALWA         (make-menu-item "carrot halwa"       "dessert"   #true 3  7.99 )) ; 23.97
+; ; (define BARFI         (make-menu-item "pista barfi"        "dessert"   #true 12 3.25 )) ; 39
+; ; 
+; ; (define YUM1 (cons LASSI         (cons SAMOSA                    (cons HALWA     empty  )))) ; 48.96
+; ; (define YUM2                     (cons PANEER (cons TIKKA        (cons BARFI     empty  )))) ; 78.50
+; ; (define YUM3 (cons SOFT-DRINK-PK (cons PAKORA (cons PALAK-PANEER                 empty  )))) ; 30.49
+; ; (define YUM4 (cons SOFT-DRINK-IN              (cons BIRYANI      (cons BARFI     empty  )))) ; 60.49 
+; ; (define YUM5 (cons PANI          (cons PAKORA (cons PALAK-PANEER (cons LADOO     empty ))))) ; 41
+; ; 
+; 
